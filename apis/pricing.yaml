@@ -1,0 +1,56 @@
+# AKOA pricing model.
+#
+# Minikube has no real cloud bill. AKOA therefore MODELS cost: "what would these
+# resource requests cost on provider X?". Every number below is an assumption you
+# can change, and the API echoes all of them back in an `assumptions` block so no
+# figure is ever shown without its basis.
+#
+# Billing basis is REQUESTED resources (what a pod reserves), which is how
+# pod-priced Kubernetes services (e.g. Fargate, Autopilot) charge. "Used" cost is
+# computed at the same unit rates for the resources actually consumed, so the gap
+# between the two is the unused allocation - the waste AKOA looks for.
+
+currency: INR            # INR or USD (display currency; profiles are priced in USD)
+
+fx:
+  usd_to_inr: 94.808     # reference rate, update periodically
+  as_of: "2026-10-22"
+  source: "https://dollarrupee.in/"
+
+hours_per_month: 730     # 8760 / 12, the usual cloud-billing convention
+
+# Your Minikube pods request tiny amounts (100m CPU / 128Mi), so absolute costs are
+# small. To model production-sized pods, set this to e.g. 10 (every 100m CPU is
+# priced as 1 vCPU). It scales requests AND usage equally, is echoed in every
+# response, and should be stated in your thesis. Keep 1.0 for "as-is".
+simulation_multiplier: 1.0
+
+active_profile: aws-fargate-us-east-1
+
+profiles:
+  aws-fargate-us-east-1:
+    provider: aws
+    description: "AWS Fargate on-demand, Linux/x86, US East (N. Virginia). Pay per pod CPU and memory."
+    vcpu_hour_usd: 0.0404784      # $0.000011244 per vCPU-second x 3600
+    gib_hour_usd: 0.004446        # $0.000001235 per GB-second x 3600
+    source: "https://aws.amazon.com/fargate/pricing/"
+    verified_on: "2026-10-23"
+    notes:
+      - "Per-second rates were read from the AWS page and multiplied by 3600; AWS does not state hourly rates there."
+      - "AWS bills memory per GB; AKOA treats 1 GiB as 1 GB (a ~7% difference at most)."
+      - "Asia Pacific (Mumbai) rates were not listed on that page; US East rates are used, so Mumbai costs will differ."
+      - "Fargate rounds pods up to supported CPU/memory sizes, so very small pods cost more in reality than modeled here."
+      - "Excludes the EKS control plane, data transfer, storage and load balancers."
+
+# To add another provider, copy a profile and fill in rates from the provider's
+# own price list (set verified_on and source). Do not guess; a wrong price here
+# becomes a wrong savings number everywhere.
+#
+#  gke-autopilot-asia-south1:
+#    provider: gcp
+#    description: "..."
+#    vcpu_hour_usd: 0.0
+#    gib_hour_usd: 0.0
+#    source: ""
+#    verified_on: ""
+#    notes: []

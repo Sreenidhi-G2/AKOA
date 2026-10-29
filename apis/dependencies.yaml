@@ -1,0 +1,10 @@
+# Configured service dependencies: "depends_on" = services this one calls.
+# Edit this when the architecture changes. backend does NOT call db-service yet,
+# so db-service is a deliberate idle ground-truth service for waste detection.
+services:
+  frontend:
+    depends_on: [backend]
+  backend:
+    depends_on: []
+  db-service:
+    depends_on: []

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: db-service
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: db-service
+
+  template:
+    metadata:
+      labels:
+        app: db-service
+
+    spec:
+      containers:
+        - name: db-service
+          image: akoa-db:1.0
+          imagePullPolicy: Never
+
+          ports:
+            - containerPort: 8002
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
